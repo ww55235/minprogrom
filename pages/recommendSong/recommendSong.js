@@ -1,4 +1,5 @@
 // pages/recommendSong.js
+import Pubsub from 'pubsub-js';
 //导入请求功能函数
 import { getRecommendSongList } from '../../utils/ajax.js';
 Page({
@@ -8,7 +9,8 @@ Page({
   data: {
     day: '',
     month: '',
-    recommendList: []
+    recommendList: [],
+    index: 0 //歌曲下标，用于找到上一首或者下一首
   },
 
   /**
@@ -20,16 +22,49 @@ Page({
       month: new Date().getMonth() + 1
     });
     this.getRecommendList();
+    //订阅者
+    Pubsub.subscribe('switchtype', (msg, type) => {
+      // console.log(msg, type);
+      let { recommendList, index } = this.data;
+      //上一首歌曲
+      if (type === 'pre') {
+        if (index === 0) {
+          //从后面的歌曲播放
+          index = recommendList.length - 1;
+        } else {
+          index -= 1;
+        }
+      } else {
+        // 下一首歌曲
+        if (index < recommendList.length - 1) {
+          index += 1;
+        } else {
+          //从前面进行播放
+          index = 0;
+        }
+      }
+      //更新index
+      this.setData({
+        index
+      });
+      // console.log(index);
+      // console.log(recommendList[index]);
+      //发布一个musicId事件
+      Pubsub.publish('musicId', recommendList[index].id);
+    });
   },
 
   //跳转至歌曲详情页
   toSongDetail(event) {
     // console.log(event);
     if (event.target.id === 'gengduo') {
-      //更多
-      // return;
+      //点击了更多
+      return;
     }
-    let song = event.currentTarget.dataset.song;
+    let { song, index } = event.currentTarget.dataset;
+    this.setData({
+      index
+    });
     //console.log(song);
     //跳转至音乐详情页面
     wx.navigateTo({

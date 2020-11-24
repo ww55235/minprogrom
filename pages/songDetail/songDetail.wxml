@@ -10,9 +10,9 @@
   </view>
   <view class="bottom-icon">
     <text class="iconfont icon-iconsMusicyemianbofangmoshiAlrepeatOne"></text>
-    <text class="iconfont icon-shangyishou"></text>
+    <text class="iconfont icon-shangyishou" id="pre" bind:tap="handleSwitch"></text>
     <text class="iconfont big {{isPlay ? 'icon-zanting' : 'icon-bofang'}} " bind:tap="handleMusicPlay"></text>
-    <text class="iconfont icon-next"></text>
+    <text class="iconfont icon-next" id="next" bind:tap="handleSwitch"></text>
     <text class="iconfont icon-iconsMusicyemianbofangmoshiPlayList"></text>
   </view>
 </view>

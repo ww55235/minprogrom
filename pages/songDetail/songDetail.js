@@ -1,4 +1,5 @@
 // pages/songDetail/songDetail.js
+import Pubsub from 'pubsub-js';
 import { getMusicDetail, getSongUrl } from '../../utils/ajax';
 const appInst = getApp();
 Page({
@@ -8,26 +9,50 @@ Page({
   data: {
     isPlay: false, //标识是否播放
     song: {},
-    musicId: ''
+    musicId: '',
+    musicLink: '' //音乐播放的链接
   },
+
+  //切换歌曲(上一首或下一首)
+  handleSwitch(event) {
+    let type = event.currentTarget.id;
+    //发布一个事件
+    Pubsub.publish('switchtype', type);
+    Pubsub.subscribe('musicId', (msg, musicId) => {
+      //console.log(musicId);
+      //移除上一个事件订阅的回调函数
+      Pubsub.unsubscribe('musicId');
+      //发送一个请求
+      //获取音乐详情
+      this.getMusicDetail(musicId);
+      //停止音乐播放
+      this.backgroundAudioManager.stop();
+      this.audioControll(true, musicId);
+    });
+  },
+
   handleMusicPlay() {
     //更新播放状态
     this.setData({
       isPlay: !this.data.isPlay,
       musicId: this.data.song.id
     });
-    let { musicId, isPlay } = this.data;
-    this.audioControll(isPlay, musicId);
+    let { musicId, isPlay, musicLink } = this.data;
+    this.audioControll(isPlay, musicId, musicLink);
   },
-
-  async audioControll(isPlay, musicId) {
+  async audioControll(isPlay, musicId, musicLink) {
     // console.log(isPlay, musicId);
     //如果是播放状态
     if (isPlay) {
-      const result = await getSongUrl(musicId);
-      // console.log(result);
+      if (!musicLink) {
+        const result = await getSongUrl(musicId);
+        musicLink = result.data[0].url;
+        this.setData({
+          musicLink
+        });
+      }
       // 设置音乐的播放地址和标题属性
-      this.backgroundAudioManager.src = result.data[0].url;
+      this.backgroundAudioManager.src = musicLink;
       this.backgroundAudioManager.title = this.data.song.name;
     } else {
       //暂停播放方法
